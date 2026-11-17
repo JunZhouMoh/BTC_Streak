@@ -1,0 +1,26 @@
+# Polymarket CLOB
+py-clob-client>=0.16.0
+py-clob-client-v2>=1.2.2,<2.0
+
+# Blockchain redemption
+web3>=6.0.0
+eth-account>=0.10.0
+
+# Async HTTP/WebSocket
+aiohttp>=3.9.0
+websockets>=12.0
+
+# Telegram, data and charts
+python-telegram-bot>=20.0
+pandas>=2.0.0
+numpy>=1.24.0
+matplotlib>=3.8.0
+
+# Terminal and web dashboards
+rich>=13.0.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+
+# Configuration and utilities
+python-dotenv>=1.0.0
+requests>=2.31.0
