@@ -29,167 +29,53 @@ _HTML = """<!DOCTYPE html>
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>BTC Trading Dashboard</title>
+  <title>BTC Live Bot</title>
   <style>
-    :root {
-      color-scheme: dark;
-      --bg:#090e18; --surface:#111a2a; --surface-raised:#152136; --border:#233149;
-      --text:#edf3ff; --muted:#8c9ab1; --green:#49d6a0; --red:#ff7185;
-      --yellow:#f4c76b; --blue:#77aaff; --accent:#8b9cff;
-    }
+    :root { --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3; --muted:#8b949e; --green:#3fb950; --red:#f85149; --yellow:#d29922; --blue:#58a6ff; }
     * { box-sizing: border-box; }
-    body { min-width:320px; margin:0; color:var(--text); background:radial-gradient(ellipse at 50% -25%,#1d2b49 0,transparent 58%),var(--bg); font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
-    button,input,select { font:inherit; }
-    button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
-    .app-shell { width:min(1440px,100%); margin:0 auto; padding:26px 30px 36px; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:4px 0 20px; border-bottom:1px solid var(--border); }
-    .brand { display:flex; align-items:center; gap:13px; min-width:0; }
-    .brand-mark { display:grid; place-items:center; width:42px; height:42px; flex:none; border:1px solid #705722; border-radius:14px; color:#ffd27b; background:linear-gradient(145deg,#45351d,#211d19); font-size:23px; font-weight:750; }
-    h1 { margin:0; font-size:19px; font-weight:680; letter-spacing:-.025em; }
-    .meta { overflow:hidden; color:var(--muted); font-size:12px; text-overflow:ellipsis; white-space:nowrap; }
-    .header-status { display:flex; flex:none; align-items:center; gap:8px; }
-    .badge { display:inline-flex; align-items:center; gap:7px; padding:6px 10px; border:1px solid var(--border); border-radius:999px; color:var(--muted); background:#101827; font-size:11px; font-weight:650; letter-spacing:.04em; text-transform:uppercase; }
-    .badge:before { width:7px; height:7px; border-radius:50%; background:currentColor; content:""; }
-    .badge.connected,.badge.simulation { color:var(--green); border-color:#245442; background:#10251f; }
-    .badge.disconnected,.badge.live { color:var(--yellow); border-color:#66532b; background:#292315; }
-    .main-nav { display:flex; gap:6px; padding:16px 0 20px; }
-    .main-nav a { padding:7px 11px; border:1px solid transparent; border-radius:8px; color:var(--muted); font-size:12px; font-weight:600; text-decoration:none; }
-    .main-nav a:hover { color:var(--text); border-color:var(--border); background:var(--surface); }
-    .section-heading { display:flex; align-items:end; justify-content:space-between; gap:16px; margin:4px 0 13px; }
-    .section-heading h2 { margin:0; font-size:15px; font-weight:650; letter-spacing:-.01em; }
-    .section-heading p { margin:3px 0 0; color:var(--muted); font-size:12px; }
-    .grid { display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:14px; }
-    .card { min-width:0; padding:18px; border:1px solid var(--border); border-radius:14px; background:linear-gradient(150deg,rgba(21,33,54,.96),rgba(15,23,37,.96)); box-shadow:0 12px 30px rgba(0,0,0,.12); }
-    .card h2 { display:flex; align-items:center; gap:8px; margin:0 0 14px; color:#bdc9dc; font-size:11px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
-    .card h2:before { width:7px; height:7px; border-radius:2px; background:var(--accent); content:""; }
-    .session-card { grid-column:span 7; }
-    .strategy-card { grid-column:span 5; }
-    .market-card { grid-column:span 6; }
-    .btc-card,.trading-card { grid-column:span 6; }
-    .manual-card { grid-column:1/-1; }
-    .controls-card { grid-column:span 6; }
-    .wide-card { grid-column:1/-1; }
-    .mono { font-family:ui-monospace,SFMono-Regular,Consolas,monospace; font-size:12px; }
-    .session-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-    .metric { min-width:0; padding:11px 12px; border:1px solid rgba(140,154,177,.13); border-radius:10px; background:rgba(7,13,23,.4); }
-    .metric span { display:block; margin-bottom:4px; color:var(--muted); font-size:10px; font-weight:650; letter-spacing:.07em; text-transform:uppercase; }
-    .metric strong { display:block; overflow-wrap:anywhere; color:var(--text); font-size:13px; font-weight:620; }
-    .sig { margin:-2px 0 12px; font-size:18px; font-weight:700; letter-spacing:-.02em; }
-    .sig.wait { color:var(--yellow); }
-    .sig.buy { color:var(--green); }
-    .sig.block { color:var(--red); }
-    .strategy-details { color:#b0bdd1; line-height:1.9; }
-    .market-card.up-card { border-top:2px solid var(--green); }
-    .market-card.down-card { border-top:2px solid var(--red); }
-    .market-card.up-card h2:before { background:var(--green); }
-    .market-card.down-card h2:before { background:var(--red); }
-    .book-details { color:#b8c5d8; line-height:1.9; }
-    .btc-card { border-top:2px solid var(--yellow); }
-    .trading-card { border-top:2px solid var(--blue); }
-    .btc-details,.trading-details { color:#bdc9dc; line-height:1.9; }
-    .trade-warning { margin:-2px 0 15px; color:var(--muted); font-size:12px; }
-    .trade-warning strong { color:var(--yellow); }
-    .trade-entry { display:flex; flex-wrap:wrap; align-items:end; gap:12px; padding-bottom:16px; border-bottom:1px solid var(--border); }
-    .trade-entry label { display:block; margin-bottom:5px; color:var(--muted); font-size:11px; font-weight:650; }
-    .amount-control { display:flex; align-items:center; gap:7px; width:150px; padding:0 10px; border:1px solid var(--border); border-radius:8px; background:#0b1220; }
-    .amount-control span { color:var(--muted); }
-    .amount-control input { width:100%; min-width:0; padding:9px 0; border:0; outline:0; color:var(--text); background:transparent; }
-    .amount-control:focus-within { border-color:var(--blue); }
-    .preset-buttons,.trade-buttons { display:flex; flex-wrap:wrap; gap:7px; }
-    .trade-groups { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; padding-top:16px; }
-    .trade-group-title { margin:0 0 9px; color:var(--muted); font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; }
-    .btn { min-height:34px; padding:7px 11px; border:1px solid #5277d2; border-radius:8px; color:#fff; background:#365bb2; cursor:pointer; font-size:12px; font-weight:650; transition:filter .15s,transform .15s; }
-    .btn:hover { filter:brightness(1.16); }
-    .btn:active { transform:translateY(1px); }
-    .btn.secondary { border-color:var(--border); color:#d5deed; background:#1b273a; }
-    .btn.up-action { border-color:#286b55; color:#c5f9e3; background:#173d32; }
-    .btn.down-action { border-color:#783c4c; color:#ffd6dc; background:#482633; }
-    .btn.sell-action { border-color:#75494a; color:#ffced0; background:#382327; }
-    .status { min-height:18px; color:var(--muted); font-size:12px; }
-    .status:empty { display:none; }
-    .section-block { margin-top:27px; scroll-margin-top:16px; }
-    .section-block .section-heading { margin-bottom:13px; }
-    .row { display:flex; justify-content:space-between; gap:8px; }
-    .controls .row { align-items:center; margin-bottom:7px; }
-    .controls label { min-width:105px; color:var(--muted); font-size:12px; }
-    .controls input[type="number"],.controls input[type="text"],.controls input[type="date"],.controls input[type="time"],.controls select { max-width:100%; border:1px solid var(--border); border-radius:7px; color:var(--text); background:#0b1220; }
-    .controls input[type="number"],.controls input[type="text"],.controls input[type="date"],.controls input[type="time"] { min-height:32px; padding:5px 8px; }
-    .controls input[type="checkbox"],.controls input[type="radio"] { accent-color:var(--accent); }
-    .mode-grid { display:grid; gap:9px; }
-    .mode-box { padding:10px; border:1px solid var(--border); border-radius:9px; background:#0d1523; }
-    .mode-title { margin-bottom:7px; color:var(--blue); font-size:12px; font-weight:650; }
-    .controls .btn { margin:3px 0; }
-    footer { display:flex; justify-content:space-between; gap:14px; margin-top:24px; padding-top:14px; border-top:1px solid var(--border); color:var(--muted); font-size:11px; }
-    #err { color:var(--red); }
-    @media (max-width:760px) {
-      .app-shell { padding:18px 16px 28px; }
-      .session-card,.strategy-card,.market-card,.btc-card,.trading-card,.controls-card { grid-column:1/-1; }
-      .trade-groups { grid-template-columns:1fr; gap:14px; }
-      .topbar { align-items:flex-start; }
-      .header-status { flex-direction:column; align-items:flex-end; }
-    }
-    @media (max-width:480px) {
-      .app-shell { padding:14px 12px 24px; }
-      .topbar { gap:10px; }
-      .brand { gap:9px; }
-      .brand-mark { width:36px; height:36px; border-radius:11px; }
-      h1 { font-size:16px; }
-      .badge { padding:5px 7px; font-size:9px; }
-      .main-nav { overflow:auto; }
-      .main-nav a { flex:none; }
-      .session-metrics { grid-template-columns:1fr; }
-      .card { padding:15px; }
-      footer { flex-direction:column; }
-    }
+    body { font-family: ui-sans-serif, system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 1rem; line-height: 1.45; }
+    h1 { font-size: 1.1rem; font-weight: 600; margin: 0 0 0.75rem; }
+    .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem; }
+    .grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 0.85rem; }
+    .card h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin: 0 0 0.5rem; }
+    .controls .row { margin-bottom: 0.35rem; align-items: center; }
+    .controls label { min-width: 105px; color: var(--muted); font-size: 0.8rem; }
+    .controls input[type="number"] { width: 86px; background: #0d1117; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 0.25rem 0.35rem; }
+    .controls input[type="checkbox"] { transform: scale(1.05); }
+    .controls input[type="date"], .controls input[type="time"] { background: #0d1117; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 0.25rem 0.35rem; font-size: 0.8rem; }
+    .mode-grid { display: grid; gap: 0.55rem; }
+    .mode-box { border: 1px solid var(--border); border-radius: 8px; padding: 0.55rem; }
+    .mode-title { color: var(--blue); font-size: 0.8rem; margin-bottom: 0.35rem; }
+    .btn { background: #1f6feb; color: #fff; border: 0; border-radius: 7px; padding: 0.35rem 0.6rem; cursor: pointer; font-size: 0.8rem; }
+    .btn.secondary { background: #30363d; }
+    .status { color: var(--muted); font-size: 0.78rem; }
+    .row { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.9rem; }
+    .sig { font-size: 1rem; font-weight: 600; }
+    .sig.wait { color: var(--yellow); }
+    .sig.buy { color: var(--green); }
+    .sig.block { color: var(--red); }
+    .mono { font-family: ui-monospace, monospace; font-size: 0.82rem; }
+    .btc { border-color: #d29922; }
+    footer { margin-top: 1rem; color: var(--muted); font-size: 0.75rem; }
   </style>
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div class="brand">
-        <div class="brand-mark" aria-hidden="true">₿</div>
-        <div><h1>BTC trading dashboard</h1><div class="meta" id="meta">Connecting to live market…</div></div>
-      </div>
-      <div class="header-status" aria-label="Bot status">
-        <span class="badge disconnected" id="connectionBadge">Connecting</span>
-        <span class="badge simulation" id="modeBadge">Simulation</span>
-      </div>
-    </header>
-    <nav class="main-nav" aria-label="Dashboard sections">
-      <a href="#overview">Overview</a><a href="#automation">Automation</a><a href="#analytics">Analytics</a>
-    </nav>
-    <main>
-      <section id="overview" class="section-block">
-        <div class="section-heading"><div><h2>Live overview</h2><p>Market conditions, strategy signal, and open exposure.</p></div></div>
-        <div class="grid">
-          <div class="card session-card"><h2>Market session</h2><div id="session" class="session-metrics"></div></div>
-          <div class="card strategy-card"><h2>Strategy signal</h2><div id="strategy"></div></div>
-          <div class="card market-card up-card"><h2>Up token</h2><div id="up" class="book-details mono">Waiting for market data…</div></div>
-          <div class="card market-card down-card"><h2>Down token</h2><div id="down" class="book-details mono">Waiting for market data…</div></div>
-          <div class="card btc-card"><h2>BTC / USD · Chainlink</h2><div id="btc" class="btc-details mono">Waiting for Chainlink…</div></div>
-          <div class="card trading-card"><h2>Position &amp; activity</h2><div id="trading" class="trading-details mono"></div></div>
-          <div class="card manual-card">
-            <h2>Manual trading</h2>
-            <p class="trade-warning"><strong>Order controls:</strong> live mode can place real orders. Check the mode badge and amount before submitting.</p>
-            <div id="manualTrade"></div>
-          </div>
-        </div>
-      </section>
-      <section id="automation" class="section-block">
-        <div class="section-heading"><div><h2>Automation</h2><p>Configure streak alerts and automated entry behavior.</p></div></div>
-        <div class="grid">
-          <div class="card controls controls-card"><h2>Telegram streak alerts</h2><div id="streakAlertPanel" class="mono">Loading…</div></div>
-          <div class="card controls wide-card"><h2>Streak-based buy bot</h2><div id="streakReversalBotPanel" class="mono">Loading…</div></div>
-          <div class="card controls wide-card"><h2>Dynamic streak selection</h2><div id="hourlyDynamicStreaks" class="mono">Loading…</div></div>
-        </div>
-      </section>
-      <section id="analytics" class="section-block">
-        <div class="section-heading"><div><h2>Streak analytics</h2><p>Historical streak endings and observed patterns.</p></div></div>
-        <div class="grid"><div class="card wide-card"><h2>Streak end counts</h2><div id="streakEnds" class="mono">Loading…</div></div></div>
-      </section>
-    </main>
-    <footer><span>Live data refreshes every second while this page is active.</span><span id="err" role="status" aria-live="polite"></span></footer>
+  <h1>BTC up/down — live</h1>
+  <div class="meta" id="meta">Loading...</div>
+  <div class="grid">
+    <div class="card"><h2>Session</h2><div id="session" class="mono"></div></div>
+    <div class="card"><h2>Strategy</h2><div id="strategy"></div></div>
+    <div class="card btc"><h2>BTC / USD TWAP (Chainlink)</h2><div id="btc" class="mono"></div></div>
+    <div class="card"><h2>Trading</h2><div id="trading" class="mono"></div></div>
+    <!-- TEMPORARILY REMOVED: Mode Performance -->
+    <!-- <div class="card"><h2>Mode Performance</h2><div id="modePerf" class="mono"></div></div> -->
+    <div class="card controls"><h2>Telegram Streak Alert</h2><div id="streakAlertPanel" class="mono">Loading...</div></div>
+    <div class="card controls"><h2>Streak-Based Buy Bot</h2><div id="streakReversalBotPanel" class="mono">Loading...</div></div>
+    <div class="card"><h2>Streak End Counts</h2><div id="streakEnds" class="mono">Loading...</div></div>
+    <div class="card controls"><h2>Hourly Dynamic Streak Lengths (1–6 Hours)</h2><div id="hourlyDynamicStreaks" class="mono">Loading...</div></div>
   </div>
+  <footer>Refreshes every second · <span id="err"></span></footer>
   <script>
     function esc(s){ if(s===null||s===undefined) return ''; var el=document.createElement('div'); el.textContent=String(s); return el.innerHTML; }
     function sigClass(t){ if(!t) return 'wait'; if(t.indexOf('BUY')>=0) return 'buy'; if(t.indexOf('NO ENTRY')>=0) return 'block'; return 'wait'; }
@@ -578,18 +464,8 @@ _HTML = """<!DOCTYPE html>
           var slug=hdr.slug!=null?String(hdr.slug):'\u2014';
           var ts='';
           if(d.ts) ts=new Date(d.ts*1000).toISOString();
-          var metaHtml=esc(slug)+' \u00b7 Updated '+esc(ts);
+          var metaHtml=esc(slug)+' \u00b7 '+esc(ts);
           setHtmlIfChanged('meta','meta',metaHtml);
-          var connectionBadge=document.getElementById('connectionBadge');
-          if(connectionBadge){
-            connectionBadge.textContent=hdr.ws_connected?'Market feed live':'Market feed offline';
-            connectionBadge.className='badge '+(hdr.ws_connected?'connected':'disconnected');
-          }
-          var modeBadge=document.getElementById('modeBadge');
-          if(modeBadge){
-            modeBadge.textContent=hdr.simulation?'Simulation':'Live trading';
-            modeBadge.className='badge '+(hdr.simulation?'simulation':'live');
-          }
           var existingAmountEl=document.getElementById('buyAmount');
           var buyAmountVal=existingAmountEl?existingAmountEl.value:'';
           var existingBuyStatusEl=document.getElementById('buyStatus');
@@ -608,23 +484,16 @@ _HTML = """<!DOCTYPE html>
           var nextUpPrice=((d.next_up&&d.next_up.book&&typeof d.next_up.book.last_price==='number')?numFmt(d.next_up.book.last_price,3):'\u2014');
           var nextDownPrice=((d.next_down&&d.next_down.book&&typeof d.next_down.book.last_price==='number')?numFmt(d.next_down.book.last_price,3):'\u2014');
           var sessionHtml=[
-            '<div class="metric"><span>Time remaining</span><strong>'+(hdr.time_left_sec!=null?esc(Math.floor(hdr.time_left_sec)+' seconds'):'\u2014')+'</strong></div>',
-            '<div class="metric"><span>Market</span><strong>'+esc(slug)+'</strong></div>',
-            '<div class="metric"><span>Current odds · UP / DOWN</span><strong>$'+esc(upPrice)+' / $'+esc(downPrice)+'</strong></div>',
-            '<div class="metric"><span>Next window · UP / DOWN</span><strong>$'+esc(nextUpPrice)+' / $'+esc(nextDownPrice)+'</strong></div>',
-            '<div class="metric"><span>Next queued order</span><strong>'+esc(nextPendingText)+'</strong></div>',
-            '<div class="metric"><span>Latest order status</span><strong>'+esc(liveStatusVal)+'</strong></div>'
-          ].join('');
+            'Timer: '+(hdr.time_left_sec!=null?esc(Math.floor(hdr.time_left_sec)+'s left'):'\u2014'),
+            'WS: '+(hdr.ws_connected?'live':'disconnected'),
+            'Mode: '+(hdr.simulation?'simulation':'real'),
+            'Live: '+esc(liveStatusVal),
+            'Current: UP '+esc(upPrice)+' | DOWN '+esc(downPrice),
+            'Next window: UP '+esc(nextUpPrice)+' | DOWN '+esc(nextDownPrice),
+            'Next queued: '+esc(nextPendingText),
+            '<span>Amount $ <input type="number" id="buyAmount" min="0.1" step="0.1" value="'+esc(buyAmountVal)+'" style="width:86px;background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-radius:6px;padding:0.2rem 0.3rem;"/> <button class="btn secondary" onclick="setBuyAmount(39)">$39</button> <button class="btn secondary" onclick="setBuyAmount(49)">$49</button> <button class="btn secondary" onclick="setBuyAmount(99)">$99</button> <button class="btn" onclick="manualBuyUp()">UP</button> <button class="btn secondary" onclick="manualBuyDown()">DOWN</button> <button class="btn secondary" style="background:#1f6feb80" onclick="manualBuyNextNowUp()">NOW UP</button> <button class="btn secondary" style="background:#1f6feb80" onclick="manualBuyNextNowDown()">NOW DOWN</button> <button class="btn secondary" onclick="manualSell()">SELL</button> <span id="buyStatus" class="status">'+esc(buyStatusVal)+'</span></span>'
+          ].join('<br/>');
           setHtmlIfChanged('session','session',sessionHtml);
-          var manualHtml=[
-            '<div class="trade-entry"><div><label for="buyAmount">Order amount</label><div class="amount-control"><span>$</span><input type="number" id="buyAmount" min="0.1" step="0.1" value="'+esc(buyAmountVal)+'"/></div></div>',
-            '<div><label>Quick amounts</label><div class="preset-buttons"><button class="btn secondary" onclick="setBuyAmount(39)">$39</button><button class="btn secondary" onclick="setBuyAmount(49)">$49</button><button class="btn secondary" onclick="setBuyAmount(99)">$99</button></div></div></div>',
-            '<div class="trade-groups"><div><div class="trade-group-title">Current window</div><div class="trade-buttons"><button class="btn up-action" onclick="manualBuyUp()">Buy UP</button><button class="btn down-action" onclick="manualBuyDown()">Buy DOWN</button></div></div>',
-            '<div><div class="trade-group-title">Queue for next window</div><div class="trade-buttons"><button class="btn secondary" onclick="manualBuyNextUp()">Queue UP</button><button class="btn secondary" onclick="manualBuyNextDown()">Queue DOWN</button></div></div>',
-            '<div><div class="trade-group-title">Other actions</div><div class="trade-buttons"><button class="btn" onclick="manualBuyNextNowUp()">Buy next UP now</button><button class="btn" onclick="manualBuyNextNowDown()">Buy next DOWN now</button><button class="btn sell-action" onclick="manualSell()">Sell position</button></div></div></div>',
-            '<div id="buyStatus" class="status" role="status" aria-live="polite">'+esc(buyStatusVal)+'</div>'
-          ].join('');
-          setHtmlIfChanged('manualTrade','manualTrade',manualHtml);
 
           var st=d.strategy||{}, sig=st.signal_text||'\u2014';
           function chk(x){ return x===true?'\u2713':x===false?'\u2717':'\u2014'; }
@@ -660,7 +529,7 @@ _HTML = """<!DOCTYPE html>
               strategyBits.push('BTC Buffer '+esc(String(modeBtcLines[bi]||'')));
             }
           }
-          var strategyHtml='<div class="sig '+sigClass(sig)+'">'+esc(sig)+'</div><div class="strategy-details mono">'+strategyBits.join('<br/>')+'</div>';
+          var strategyHtml='<div class="sig '+sigClass(sig)+'">'+esc(sig)+'</div><div class="mono" style="margin-top:0.4rem">'+strategyBits.join('<br/>')+'</div>';
           setHtmlIfChanged('strategy','strategy',strategyHtml);
 
           function book(x,id){ var el=document.getElementById(id); if(!el) return; if(!x){ el.textContent='No data'; return; } var bk=x.book||{}, ind=x.indicators||{}; el.innerHTML=['Last '+esc(bk.last_price),'Bid '+esc(bk.best_bid)+' / Ask '+esc(bk.best_ask),'PM VWAP '+numFmt(ind.pm_vwap,4)+' \u00b7 BTC VWAP '+(ind.btc_vwap_weighted!=null?numFmt(ind.btc_vwap_weighted,4):'\u2014'),'Dev '+(ind.deviation_pct!=null?numFmt(ind.deviation_pct,2)+'%':'\u2014')+' \u00b7 BTC Vol Bias '+(ind.btc_vol_ratio!=null?numFmt(ind.btc_vol_ratio,1)+'%':'\u2014'),'Z '+numFmt(ind.zscore,2)+' \u00b7 Mom '+(ind.momentum_pct!=null?numFmt(ind.momentum_pct,2)+'%':'\u2014'),'Vol '+(bk.volume_total!=null?esc(Math.round(bk.volume_total)):'\u2014')].join('<br/>'); }
